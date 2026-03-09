@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: exchanger-db
+    environment:
+      POSTGRES_DB: exchanger_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+
+    restart: unless-stopped
+    networks:
+      - exchanger-net
+
+  exchanger-api:
+    image: tomcat:10.1-jdk21
+    container_name: exchanger-api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./target/exchanger.war:/usr/local/tomcat/webapps/ROOT.war
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - exchanger-net
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=exchanger_db
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+
+volumes:
+  postgres_data:
+
+networks:
+  exchanger-net:

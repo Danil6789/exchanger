@@ -1,0 +1,45 @@
+package services;
+
+import models.ExchangeRate;
+import repositories.ExchangeRateRepository;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Optional;
+
+public class ExchangeRateService {
+    private final ExchangeRateRepository exchangeRateRepo;
+    public ExchangeRateService(ExchangeRateRepository exchangeRateRepo){
+        this.exchangeRateRepo = exchangeRateRepo;
+    }
+
+    public ExchangeRate getExchangeRate(String baseCurrencyCode, String targetCurrencyCode){
+        Optional<ExchangeRate> exchangeRateOptAB = exchangeRateRepo.findByCoupleCodes(baseCurrencyCode, targetCurrencyCode);
+        if(exchangeRateOptAB.isPresent()){
+            return exchangeRateOptAB.get();
+        }
+
+        Optional<ExchangeRate> exchangeRateOptBA = exchangeRateRepo.findByCoupleCodes(targetCurrencyCode, baseCurrencyCode);
+        if(exchangeRateOptBA.isPresent()){
+            var exchangeRate = exchangeRateOptBA.get();
+            exchangeRate.setRate(BigDecimal.ONE.divide(exchangeRate.getRate(), 2, RoundingMode.HALF_UP));
+            return exchangeRate;
+        }
+
+        Optional<ExchangeRate> exchangeRateOptA = exchangeRateRepo.findByCoupleCodes("USD", baseCurrencyCode);
+        if(exchangeRateOptA.isPresent()){
+            Optional<ExchangeRate> exchangeRateOptB = exchangeRateRepo.findByCoupleCodes("USD", targetCurrencyCode);
+            if(exchangeRateOptB.isPresent()){
+                BigDecimal rate = exchangeRateOptB.get().getRate().divide(exchangeRateOptA.get().getRate(), 2, RoundingMode.HALF_UP);
+                ExchangeRate exchangeRate = new ExchangeRate();
+                exchangeRate.setRate(rate);
+                exchangeRate.setBaseCurrency(exchangeRateOptA.get().getTargetCurrency());
+                exchangeRate.setTargetCurrency(exchangeRateOptB.get().getTargetCurrency());
+                exchangeRate.setId(0L);
+                return exchangeRate;
+            }
+        }
+
+        throw new RuntimeException("Невозможно найти курс для " + baseCurrencyCode + "/" + targetCurrencyCode);
+    }
+}
