@@ -7,6 +7,7 @@ import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 import mapper.CurrencyMapper;
 import mapper.ExchangeMapper;
+import mapper.ExchangeRateMapper;
 import org.mapstruct.factory.Mappers;
 import repository.CurrencyRepository;
 import repository.ExchangeRateRepository;
@@ -46,23 +47,25 @@ public class СontextListener implements ServletContextListener{
             sce.getServletContext().setAttribute("dataSource", dataSource);
             System.out.println("7. DataSource сохранен");
 
-            CurrencyRepository currencyRepo = new CurrencyRepository(dataSource);
-            ExchangeRateRepository exchangeRateRepo = new ExchangeRateRepository(dataSource);
-            System.out.println("8. Репозитории созданы");
-
             ExchangeMapper exchangeMapper = Mappers.getMapper(ExchangeMapper.class);
             sce.getServletContext().setAttribute("exchangeMapper", exchangeMapper);
+
+            ExchangeRateMapper exchangeRateMapper = Mappers.getMapper(ExchangeRateMapper.class);
+            sce.getServletContext().setAttribute("exchangeRateMapper", exchangeRateMapper);
 
             CurrencyMapper currencyMapper = Mappers.getMapper(CurrencyMapper.class);
             sce.getServletContext().setAttribute("currencyMapper", currencyMapper);
 
-            ExchangeRateService exchangeRateService = new ExchangeRateService(exchangeRateRepo);
-            sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
+            CurrencyRepository currencyRepo = new CurrencyRepository(dataSource, currencyMapper);
+            ExchangeRateRepository exchangeRateRepo = new ExchangeRateRepository(dataSource, exchangeRateMapper, currencyRepo);
+            System.out.println("8. Репозитории созданы");
 
+            ExchangeRateService exchangeRateService = new ExchangeRateService(exchangeRateRepo);
             sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
 
             sce.getServletContext().setAttribute("currencyRepo", currencyRepo);
             sce.getServletContext().setAttribute("exchangeRateRepo", exchangeRateRepo);
+
             System.out.println("9. Инициализация успешно завершена");
 
         }

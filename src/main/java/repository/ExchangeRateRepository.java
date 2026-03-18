@@ -1,22 +1,33 @@
 package repository;
 
+import dto.ExchangeRateRequest;
+import mapper.ExchangeRateMapper;
 import model.Currency;
 import model.ExchangeRate;
 
 import javax.sql.DataSource;
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.math.BigDecimal;
 
 public class ExchangeRateRepository {
     private final DataSource dataSource;
-
-    public ExchangeRateRepository(DataSource dataSource) {
+    private final ExchangeRateMapper exchangeRateMapper;
+    private final CurrencyRepository currencyRepo;
+    public ExchangeRateRepository(DataSource dataSource, ExchangeRateMapper exchangeRateMapper, CurrencyRepository currencyRepo ) {
         this.dataSource = dataSource;
+        this.exchangeRateMapper = exchangeRateMapper;
+        this.currencyRepo = currencyRepo;
     }
-    public ExchangeRate save(ExchangeRate exchangeRate) {
+
+    public ExchangeRate save(ExchangeRateRequest exchangeRateDto) {
+
+        Currency baseCurrency = currencyRepo.findByCode(exchangeRateDto.getBaseCurrencyCode()).orElseThrow();
+        Currency targetCurrency = currencyRepo.findByCode(exchangeRateDto.getTargetCurrencyCode()).orElseThrow();
+
+        ExchangeRate exchangeRate = exchangeRateMapper.toEntity(exchangeRateDto, baseCurrency, targetCurrency);
         String sql = "INSERT INTO CurrencyExchanger.ExchangeRates (baseCurrencyId, targetCurrencyId, rate) VALUES (?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
@@ -68,13 +79,13 @@ public class ExchangeRateRepository {
                 Currency baseCurrency = new Currency();
                 baseCurrency.setId(rs.getLong("base_id"));
                 baseCurrency.setCode(rs.getString("base_code"));
-                baseCurrency.setName(rs.getString("base_fullName"));
+                baseCurrency.setFullName(rs.getString("base_fullName"));
                 baseCurrency.setSign(rs.getString("base_sign"));
 
                 Currency targetCurrency = new Currency();
                 targetCurrency.setId(rs.getLong("target_id"));
                 targetCurrency.setCode(rs.getString("target_code"));
-                targetCurrency.setName(rs.getString("target_fullName"));
+                targetCurrency.setFullName(rs.getString("target_fullName"));
                 targetCurrency.setSign(rs.getString("target_sign"));
 
                 ExchangeRate rate = new ExchangeRate();
@@ -119,13 +130,13 @@ public class ExchangeRateRepository {
                 Currency baseCurrency = new Currency();
                 baseCurrency.setId(rs.getLong("base_id"));
                 baseCurrency.setCode(rs.getString("base_code"));
-                baseCurrency.setName(rs.getString("base_fullName"));
+                baseCurrency.setFullName(rs.getString("base_fullName"));
                 baseCurrency.setSign(rs.getString("base_sign"));
 
                 Currency targetCurrency = new Currency();
                 targetCurrency.setId(rs.getLong("target_id"));
                 targetCurrency.setCode(rs.getString("target_code"));
-                targetCurrency.setName(rs.getString("target_fullName"));
+                targetCurrency.setFullName(rs.getString("target_fullName"));
                 targetCurrency.setSign(rs.getString("target_sign"));
 
                 ExchangeRate exchangeRate = new ExchangeRate();

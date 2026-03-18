@@ -1,17 +1,21 @@
 package mapper;
 
-import dto.CurrencyRequestDto;
-import dto.CurrencyResponseDto;
+import dto.CurrencyRequest;
+import dto.CurrencyResponse;
 import model.Currency;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "default")
 public interface CurrencyMapper {
 
-    @Mapping(source = "fullName", target = "name")
-    Currency toEntity(CurrencyRequestDto request);
-
     @Mapping(source = "name", target = "fullName")
-    CurrencyResponseDto toDto(Currency currency);
+    Currency toEntity(CurrencyRequest request);
+
+    @Mapping(source = "fullName", target = "name")
+    CurrencyResponse toDto(Currency currency);
+
+    List<CurrencyResponse> toDtoList(List<Currency> currencies);
 }

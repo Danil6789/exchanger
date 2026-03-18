@@ -1,12 +1,24 @@
 package mapper;
 
-import dto.ExchangeRateRequestDto;
-import dto.ExchangeRateResponseDto;
+import dto.ExchangeRateRequest;
+import dto.ExchangeRateResponse;
+import model.Currency;
 import model.ExchangeRate;
 import org.mapstruct.Mapper;
 
+import java.util.List;
+
 @Mapper(componentModel = "default")
 public interface ExchangeRateMapper {
-    ExchangeRate toEntity(ExchangeRateRequestDto request);
-    ExchangeRateResponseDto toDto(ExchangeRate exchangeRate);
+    default ExchangeRate toEntity(ExchangeRateRequest request, Currency baseCurrency, Currency targetCurrency) {
+        ExchangeRate exchangeRate = new ExchangeRate();
+        exchangeRate.setBaseCurrency(baseCurrency);
+        exchangeRate.setTargetCurrency(targetCurrency);
+        exchangeRate.setRate(request.getRate());
+        return exchangeRate;
+    }
+
+    ExchangeRateResponse toDto(ExchangeRate exchangeRate);
+
+    List<ExchangeRateResponse> toDtoList(List<ExchangeRate> exchangeRates);
 }

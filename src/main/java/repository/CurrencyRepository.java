@@ -1,5 +1,7 @@
 package repository;
 
+import dto.CurrencyRequest;
+import mapper.CurrencyMapper;
 import model.Currency;
 
 import javax.sql.DataSource;
@@ -10,9 +12,11 @@ import java.util.Optional;
 
 public class CurrencyRepository {
     private final DataSource dataSource;
+    private final CurrencyMapper currencyMapper;
 
-    public CurrencyRepository(DataSource dataSource) {
+    public CurrencyRepository(DataSource dataSource, CurrencyMapper currencyMapper) {
         this.dataSource = dataSource;
+        this.currencyMapper = currencyMapper;
     }
 
     public List<Currency> findAll() throws SQLException {
@@ -27,7 +31,7 @@ public class CurrencyRepository {
                 Currency c = new Currency();
                 c.setId(rs.getLong("id"));
                 c.setCode(rs.getString("code"));
-                c.setName(rs.getString("fullName"));
+                c.setFullName(rs.getString("fullName"));
                 c.setSign(rs.getString("sign"));
                 currencies.add(c);
             }
@@ -35,14 +39,15 @@ public class CurrencyRepository {
         return currencies;
     }
 
-    public Currency save(Currency currency) {
+    public Currency save(CurrencyRequest currencyDto) {
+        Currency currency = currencyMapper.toEntity(currencyDto);
         String sql = "INSERT INTO CurrencyExchanger.Currencies (code, fullName, sign) VALUES (?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, currency.getCode());
-            stmt.setString(2, currency.getName());
+            stmt.setString(2, currency.getFullName());
             stmt.setString(3, currency.getSign());
             stmt.executeUpdate();
 
@@ -69,7 +74,7 @@ public class CurrencyRepository {
                 Currency currency = new Currency();
                 currency.setId(rs.getLong("id"));
                 currency.setCode(rs.getString("code"));
-                currency.setName(rs.getString("fullName"));
+                currency.setFullName(rs.getString("fullName"));
                 currency.setSign(rs.getString("sign"));
                 return Optional.of(currency);
             }

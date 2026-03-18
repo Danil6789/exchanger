@@ -1,7 +1,7 @@
 package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dto.ExchangeResponseDto;
+import dto.ExchangeResponse;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +25,7 @@ public class ExchangeServlet extends HttpServlet{
         ExchangeRateRepository exchangeRateRepo = (ExchangeRateRepository) getServletContext()
                 .getAttribute("exchangeRateRepo");
         this.exchangeRateService = new ExchangeRateService(exchangeRateRepo);
+        this.exchangeMapper = (ExchangeMapper) getServletContext().getAttribute("exchangeMapper");
     }
 
     @Override
@@ -33,8 +34,8 @@ public class ExchangeServlet extends HttpServlet{
         String targetCurrencyCode = req.getParameter("to");
         BigDecimal amount = new BigDecimal(req.getParameter("amount"));
         var exchangeRate = exchangeRateService.getExchangeRate(baseCurrencyCode, targetCurrencyCode);
-        ExchangeResponseDto exchangeResponseDto = exchangeMapper.toDto(exchangeRate, amount);
+        ExchangeResponse exchangeResponse = exchangeMapper.toDto(exchangeRate, amount);
 
-        objectMapper.writeValue(resp.getOutputStream(), exchangeResponseDto);
+        objectMapper.writeValue(resp.getOutputStream(), exchangeResponse);
     }
 }

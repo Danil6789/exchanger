@@ -22,7 +22,7 @@ public class ExchangeRateService {
         Optional<ExchangeRate> exchangeRateOptBA = exchangeRateRepo.findByCoupleCodes(targetCurrencyCode, baseCurrencyCode);
         if(exchangeRateOptBA.isPresent()){
             var exchangeRate = exchangeRateOptBA.get();
-            exchangeRate.setRate(BigDecimal.ONE.divide(exchangeRate.getRate(), 2, RoundingMode.HALF_UP));
+            exchangeRate.setRate(BigDecimal.ONE.divide(exchangeRate.getRate(), 6, RoundingMode.HALF_UP));
             return exchangeRate;
         }
 

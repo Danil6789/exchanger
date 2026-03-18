@@ -1,13 +1,17 @@
 package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.CurrencyRequest;
+import dto.CurrencyResponse;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
+import mapper.CurrencyMapper;
 import model.Currency;
 import repository.CurrencyRepository;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -18,19 +22,22 @@ import java.util.Map;
 public class CurrenciesServlet extends HttpServlet {
     private ObjectMapper objectMapper;
     private CurrencyRepository currencyRepo;
+    private CurrencyMapper currencyMapper;
 
     @Override
     public void init() {
         this.objectMapper = new ObjectMapper();
         currencyRepo = (CurrencyRepository) getServletContext()
                 .getAttribute("currencyRepo");
+        currencyMapper = (CurrencyMapper) getServletContext().getAttribute("currencyMapper");
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try{
             List<Currency> currencies = currencyRepo.findAll();
-            objectMapper.writeValue(resp.getOutputStream(), currencies);
+            List<CurrencyResponse> currencyResponses = currencyMapper.toDtoList(currencies);
+            objectMapper.writeValue(resp.getOutputStream(), currencyResponses);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, String> error = new HashMap<>();
@@ -45,7 +52,10 @@ public class CurrenciesServlet extends HttpServlet {
         String code = req.getParameter("code");
         String sign = req.getParameter("sign");
 
-        if (name == null || code == null || sign == null) {
+        if (name == null || name.isEmpty() ||
+                code == null || code.isEmpty() ||
+                sign == null || sign.isEmpty()) {
+
             resp.setStatus(400);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Не все поля заполнены");
@@ -61,14 +71,9 @@ public class CurrenciesServlet extends HttpServlet {
             return;
         }
 
-        Currency currency = new Currency();
-        currency.setName(name);
-        currency.setCode(code.toUpperCase());
-        currency.setSign(sign);
-
-        Currency saved = currencyRepo.save(currency);
-
+        Currency saved = currencyRepo.save(new CurrencyRequest(name, code, sign));
         resp.setStatus(201);
-        objectMapper.writeValue(resp.getOutputStream(), saved);
+        CurrencyResponse currencyResponse = currencyMapper.toDto(saved);
+        objectMapper.writeValue(resp.getOutputStream(), currencyResponse);
     }
 }

@@ -1,11 +1,14 @@
 package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dto.ExchangeRateRequest;
+import dto.ExchangeRateResponse;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
+import mapper.ExchangeRateMapper;
 import model.ExchangeRate;
 import repository.CurrencyRepository;
 import repository.ExchangeRateRepository;
@@ -22,6 +25,7 @@ public class ExchangeRatesServlet extends HttpServlet {
     private ObjectMapper objectMapper;
     private ExchangeRateRepository exchangeRateRepo;
     private CurrencyRepository currencyRepo;
+    private ExchangeRateMapper exchangeRateMapper;
 
     @Override
     public void init() {
@@ -30,13 +34,15 @@ public class ExchangeRatesServlet extends HttpServlet {
                 .getAttribute("exchangeRateRepo");
         this.currencyRepo = (CurrencyRepository) getServletContext()
                 .getAttribute("currencyRepo");
+        this.exchangeRateMapper = (ExchangeRateMapper) getServletContext().getAttribute("exchangeRateMapper");
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try{
             List<ExchangeRate> exchangeRates = exchangeRateRepo.findAll();
-            objectMapper.writeValue(resp.getOutputStream(), exchangeRates);
+            List<ExchangeRateResponse> exchangeRateResponses = exchangeRateMapper.toDtoList(exchangeRates);
+            objectMapper.writeValue(resp.getOutputStream(), exchangeRateResponses);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             Map<String, String> error = new HashMap<>();
@@ -52,29 +58,31 @@ public class ExchangeRatesServlet extends HttpServlet {
         String targetCurrencyCode = req.getParameter("targetCurrencyCode");
         String rate = req.getParameter("rate");
 
-        if(baseCurrencyCode == null || targetCurrencyCode == null || rate == null){
+        if(baseCurrencyCode == null
+                || targetCurrencyCode == null
+                || rate == null){
             resp.setStatus(400);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Не все поля заполнены");
             objectMapper.writeValue(resp.getOutputStream(), error);
             return;
         }
-        if (exchangeRateRepo.findByCoupleCodes(baseCurrencyCode, targetCurrencyCode).isPresent()) {
+        if (exchangeRateRepo
+                .findByCoupleCodes(baseCurrencyCode, targetCurrencyCode)
+                .isPresent()) {
             resp.setStatus(409);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Такой обменный курс уже есть");
             objectMapper.writeValue(resp.getOutputStream(), error);
             return;
         }
-        if(currencyRepo.findByCode(baseCurrencyCode).isPresent() || currencyRepo.findByCode(targetCurrencyCode).isPresent()){
-            ExchangeRate exchangeRate = new ExchangeRate();
-            exchangeRate.setBaseCurrency(currencyRepo.findByCode(baseCurrencyCode).get());
-            exchangeRate.setTargetCurrency(currencyRepo.findByCode(targetCurrencyCode).get());
-            exchangeRate.setRate(new BigDecimal(rate));
+        if(currencyRepo.findByCode(baseCurrencyCode).isPresent()
+                && currencyRepo.findByCode(targetCurrencyCode).isPresent()){
 
-            ExchangeRate saved = exchangeRateRepo.save(exchangeRate);
+            ExchangeRate saved = exchangeRateRepo.save(new ExchangeRateRequest(baseCurrencyCode, targetCurrencyCode, new BigDecimal(rate)));
             resp.setStatus(201);
-            objectMapper.writeValue(resp.getOutputStream(), saved);
+            ExchangeRateResponse exchangeRateResponse = exchangeRateMapper.toDto(saved);
+            objectMapper.writeValue(resp.getOutputStream(), exchangeRateResponse);
         }
     }
 }
