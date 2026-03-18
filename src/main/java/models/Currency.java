@@ -1,6 +1,5 @@
 package models;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +8,6 @@ import lombok.Setter;
 public class Currency {
     private Long id;
     private String code;
-    private String fullName;
+    private String name;
     private String sign;
 }

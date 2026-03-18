@@ -68,13 +68,13 @@ public class ExchangeRateRepository {
                 Currency baseCurrency = new Currency();
                 baseCurrency.setId(rs.getLong("base_id"));
                 baseCurrency.setCode(rs.getString("base_code"));
-                baseCurrency.setFullName(rs.getString("base_fullName"));
+                baseCurrency.setName(rs.getString("base_fullName"));
                 baseCurrency.setSign(rs.getString("base_sign"));
 
                 Currency targetCurrency = new Currency();
                 targetCurrency.setId(rs.getLong("target_id"));
                 targetCurrency.setCode(rs.getString("target_code"));
-                targetCurrency.setFullName(rs.getString("target_fullName"));
+                targetCurrency.setName(rs.getString("target_fullName"));
                 targetCurrency.setSign(rs.getString("target_sign"));
 
                 ExchangeRate rate = new ExchangeRate();
@@ -119,13 +119,13 @@ public class ExchangeRateRepository {
                 Currency baseCurrency = new Currency();
                 baseCurrency.setId(rs.getLong("base_id"));
                 baseCurrency.setCode(rs.getString("base_code"));
-                baseCurrency.setFullName(rs.getString("base_fullName"));
+                baseCurrency.setName(rs.getString("base_fullName"));
                 baseCurrency.setSign(rs.getString("base_sign"));
 
                 Currency targetCurrency = new Currency();
                 targetCurrency.setId(rs.getLong("target_id"));
                 targetCurrency.setCode(rs.getString("target_code"));
-                targetCurrency.setFullName(rs.getString("target_fullName"));
+                targetCurrency.setName(rs.getString("target_fullName"));
                 targetCurrency.setSign(rs.getString("target_sign"));
 
                 ExchangeRate exchangeRate = new ExchangeRate();

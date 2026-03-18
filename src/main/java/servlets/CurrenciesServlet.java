@@ -41,13 +41,13 @@ public class CurrenciesServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String name = req.getParameter("fullName");
+        String name = req.getParameter("name");
         String code = req.getParameter("code");
         String sign = req.getParameter("sign");
 
         // Проверяем, что все поля есть
         if (name == null || code == null || sign == null) {
-            resp.setStatus(500);
+            resp.setStatus(400);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Не все поля заполнены");
             objectMapper.writeValue(resp.getOutputStream(), error);
@@ -65,7 +65,7 @@ public class CurrenciesServlet extends HttpServlet {
 
         // Создаем и сохраняем валюту
         Currency currency = new Currency();
-        currency.setFullName(name);
+        currency.setName(name);
         currency.setCode(code.toUpperCase());
         currency.setSign(sign);
 
