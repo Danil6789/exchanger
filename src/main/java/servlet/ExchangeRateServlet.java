@@ -1,14 +1,13 @@
-package servlets;
+package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import models.ExchangeRate;
-import repositories.CurrencyRepository;
-import repositories.ExchangeRateRepository;
+import model.ExchangeRate;
+import repository.ExchangeRateRepository;
 import jakarta.servlet.http.HttpServlet;
-import services.ExchangeRateService;
+import service.ExchangeRateService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -100,7 +99,6 @@ public class ExchangeRateServlet extends HttpServlet{
 
             objectMapper.writeValue(resp.getOutputStream(), error);
         }
-
 
     }
 }

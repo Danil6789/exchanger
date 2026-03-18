@@ -1,4 +1,4 @@
-package servlets;
+package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
@@ -6,8 +6,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
-import models.Currency;
-import repositories.CurrencyRepository;
+import model.Currency;
+import repository.CurrencyRepository;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +45,6 @@ public class CurrenciesServlet extends HttpServlet {
         String code = req.getParameter("code");
         String sign = req.getParameter("sign");
 
-        // Проверяем, что все поля есть
         if (name == null || code == null || sign == null) {
             resp.setStatus(400);
             Map<String, String> error = new HashMap<>();
@@ -54,7 +53,6 @@ public class CurrenciesServlet extends HttpServlet {
             return;
         }
 
-        // Проверяем, существует ли уже такая валюта
         if (currencyRepo.findByCode(code).isPresent()) {
             resp.setStatus(409);
             Map<String, String> error = new HashMap<>();
@@ -63,7 +61,6 @@ public class CurrenciesServlet extends HttpServlet {
             return;
         }
 
-        // Создаем и сохраняем валюту
         Currency currency = new Currency();
         currency.setName(name);
         currency.setCode(code.toUpperCase());
@@ -71,7 +68,6 @@ public class CurrenciesServlet extends HttpServlet {
 
         Currency saved = currencyRepo.save(currency);
 
-        // Отправляем ответ
         resp.setStatus(201);
         objectMapper.writeValue(resp.getOutputStream(), saved);
     }

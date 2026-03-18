@@ -1,7 +1,7 @@
-package services;
+package service;
 
-import models.ExchangeRate;
-import repositories.ExchangeRateRepository;
+import model.ExchangeRate;
+import repository.ExchangeRateRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

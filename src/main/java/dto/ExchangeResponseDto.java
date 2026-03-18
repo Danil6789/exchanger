@@ -1,4 +1,4 @@
-package dtos;
+package dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,9 +9,10 @@ import java.math.BigDecimal;
 @Setter
 @Getter
 @NoArgsConstructor
-public class ExchangeDto {
-    private CurrencyDto baseCurrency;
-    private CurrencyDto targetCurrency;
+public class ExchangeResponseDto {
+    private Long id;
+    private CurrencyResponseDto baseCurrency;
+    private CurrencyResponseDto targetCurrency;
     private BigDecimal rate;
     private BigDecimal amount;
     private BigDecimal convertedAmount;

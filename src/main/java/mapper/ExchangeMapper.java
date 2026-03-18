@@ -1,7 +1,7 @@
-package mappers;
+package mapper;
 
-import dtos.ExchangeDto;
-import models.ExchangeRate;
+import dto.ExchangeResponseDto;
+import model.ExchangeRate;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -11,5 +11,5 @@ import java.math.BigDecimal;
 public interface ExchangeMapper {
 
     @Mapping(target="convertedAmount", expression = "java(amount.multiply(exchangeRate.getRate()))")
-    ExchangeDto toDto(ExchangeRate exchangeRate, BigDecimal amount);
+    ExchangeResponseDto toDto(ExchangeRate exchangeRate, BigDecimal amount);
 }

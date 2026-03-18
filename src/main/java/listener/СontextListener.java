@@ -1,12 +1,16 @@
-package listeners;
+package listener;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
-import repositories.CurrencyRepository;
-import repositories.ExchangeRateRepository;
+import mapper.CurrencyMapper;
+import mapper.ExchangeMapper;
+import org.mapstruct.factory.Mappers;
+import repository.CurrencyRepository;
+import repository.ExchangeRateRepository;
+import service.ExchangeRateService;
 
 import javax.sql.DataSource;
 import java.io.InputStream;
@@ -14,7 +18,7 @@ import java.util.Properties;
 
 
 @WebListener
-public class contextListener implements ServletContextListener{
+public class СontextListener implements ServletContextListener{
 
     @Override
     public void contextInitialized(ServletContextEvent sce){
@@ -45,6 +49,17 @@ public class contextListener implements ServletContextListener{
             CurrencyRepository currencyRepo = new CurrencyRepository(dataSource);
             ExchangeRateRepository exchangeRateRepo = new ExchangeRateRepository(dataSource);
             System.out.println("8. Репозитории созданы");
+
+            ExchangeMapper exchangeMapper = Mappers.getMapper(ExchangeMapper.class);
+            sce.getServletContext().setAttribute("exchangeMapper", exchangeMapper);
+
+            CurrencyMapper currencyMapper = Mappers.getMapper(CurrencyMapper.class);
+            sce.getServletContext().setAttribute("currencyMapper", currencyMapper);
+
+            ExchangeRateService exchangeRateService = new ExchangeRateService(exchangeRateRepo);
+            sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
+
+            sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
 
             sce.getServletContext().setAttribute("currencyRepo", currencyRepo);
             sce.getServletContext().setAttribute("exchangeRateRepo", exchangeRateRepo);

@@ -1,7 +1,7 @@
-package repositories;
+package repository;
 
-import models.Currency;
-import models.ExchangeRate;
+import model.Currency;
+import model.ExchangeRate;
 
 import javax.sql.DataSource;
 import java.sql.*;

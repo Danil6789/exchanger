@@ -1,15 +1,14 @@
-package servlets;
+package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dtos.ExchangeDto;
+import dto.ExchangeResponseDto;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mappers.ExchangeMapper;
-import org.mapstruct.factory.Mappers;
-import repositories.ExchangeRateRepository;
-import jakarta.servlet.http.HttpServlet;
-import services.ExchangeRateService;
+import mapper.ExchangeMapper;
+import repository.ExchangeRateRepository;
+import service.ExchangeRateService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -25,7 +24,6 @@ public class ExchangeServlet extends HttpServlet{
         this.objectMapper = new ObjectMapper();
         ExchangeRateRepository exchangeRateRepo = (ExchangeRateRepository) getServletContext()
                 .getAttribute("exchangeRateRepo");
-        this.exchangeMapper = Mappers.getMapper(ExchangeMapper.class);
         this.exchangeRateService = new ExchangeRateService(exchangeRateRepo);
     }
 
@@ -35,8 +33,8 @@ public class ExchangeServlet extends HttpServlet{
         String targetCurrencyCode = req.getParameter("to");
         BigDecimal amount = new BigDecimal(req.getParameter("amount"));
         var exchangeRate = exchangeRateService.getExchangeRate(baseCurrencyCode, targetCurrencyCode);
-        ExchangeDto exchangeDto = exchangeMapper.toDto(exchangeRate, amount);
+        ExchangeResponseDto exchangeResponseDto = exchangeMapper.toDto(exchangeRate, amount);
 
-        objectMapper.writeValue(resp.getOutputStream(), exchangeDto);
+        objectMapper.writeValue(resp.getOutputStream(), exchangeResponseDto);
     }
 }

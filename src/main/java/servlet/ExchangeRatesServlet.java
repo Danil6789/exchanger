@@ -1,4 +1,4 @@
-package servlets;
+package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
@@ -6,9 +6,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
-import models.ExchangeRate;
-import repositories.CurrencyRepository;
-import repositories.ExchangeRateRepository;
+import model.ExchangeRate;
+import repository.CurrencyRepository;
+import repository.ExchangeRateRepository;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -51,15 +51,14 @@ public class ExchangeRatesServlet extends HttpServlet {
         String baseCurrencyCode = req.getParameter("baseCurrencyCode");
         String targetCurrencyCode = req.getParameter("targetCurrencyCode");
         String rate = req.getParameter("rate");
-        // Проверяем, что все поля есть
-        if(baseCurrencyCode == null ||  targetCurrencyCode == null || rate == null){
+
+        if(baseCurrencyCode == null || targetCurrencyCode == null || rate == null){
             resp.setStatus(400);
             Map<String, String> error = new HashMap<>();
             error.put("error", "Не все поля заполнены");
             objectMapper.writeValue(resp.getOutputStream(), error);
             return;
         }
-        // Проверяем, существует ли такой обменный курс
         if (exchangeRateRepo.findByCoupleCodes(baseCurrencyCode, targetCurrencyCode).isPresent()) {
             resp.setStatus(409);
             Map<String, String> error = new HashMap<>();
@@ -67,20 +66,15 @@ public class ExchangeRatesServlet extends HttpServlet {
             objectMapper.writeValue(resp.getOutputStream(), error);
             return;
         }
-        // Создаем и сохраняем обменный курс
         if(currencyRepo.findByCode(baseCurrencyCode).isPresent() || currencyRepo.findByCode(targetCurrencyCode).isPresent()){
             ExchangeRate exchangeRate = new ExchangeRate();
             exchangeRate.setBaseCurrency(currencyRepo.findByCode(baseCurrencyCode).get());
             exchangeRate.setTargetCurrency(currencyRepo.findByCode(targetCurrencyCode).get());
             exchangeRate.setRate(new BigDecimal(rate));
 
-            // Отправляем ответ
             ExchangeRate saved = exchangeRateRepo.save(exchangeRate);
             resp.setStatus(201);
             objectMapper.writeValue(resp.getOutputStream(), saved);
         }
-
     }
-
-
 }
