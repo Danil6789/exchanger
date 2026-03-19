@@ -40,8 +40,7 @@ public class ExchangeRatesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try{
-            List<ExchangeRate> exchangeRates = exchangeRateRepo.findAll();
-            List<ExchangeRateResponse> exchangeRateResponses = exchangeRateMapper.toDtoList(exchangeRates);
+            List<ExchangeRateResponse> exchangeRateResponses = exchangeRateMapper.toDtoList(exchangeRateRepo.findAll());
             objectMapper.writeValue(resp.getOutputStream(), exchangeRateResponses);
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -68,7 +67,7 @@ public class ExchangeRatesServlet extends HttpServlet {
             return;
         }
         if (exchangeRateRepo
-                .findByCoupleCodes(baseCurrencyCode, targetCurrencyCode)
+                .findByCodes(baseCurrencyCode, targetCurrencyCode)
                 .isPresent()) {
             resp.setStatus(409);
             Map<String, String> error = new HashMap<>();

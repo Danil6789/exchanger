@@ -11,6 +11,7 @@ import mapper.ExchangeRateMapper;
 import org.mapstruct.factory.Mappers;
 import repository.CurrencyRepository;
 import repository.ExchangeRateRepository;
+import service.CurrencyService;
 import service.ExchangeRateService;
 
 import javax.sql.DataSource;
@@ -60,6 +61,8 @@ public class СontextListener implements ServletContextListener{
             ExchangeRateRepository exchangeRateRepo = new ExchangeRateRepository(dataSource, exchangeRateMapper, currencyRepo);
             System.out.println("8. Репозитории созданы");
 
+            CurrencyService currencyService = new CurrencyService(currencyRepo, currencyMapper);
+            sce.getServletContext().setAttribute("currencyService", currencyService);
             ExchangeRateService exchangeRateService = new ExchangeRateService(exchangeRateRepo);
             sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
 

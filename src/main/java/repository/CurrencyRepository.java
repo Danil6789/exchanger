@@ -1,6 +1,7 @@
 package repository;
 
-import dto.CurrencyRequest;
+import exception.CurrencyAlreadyExistsException;
+import exception.DatabaseException;
 import mapper.CurrencyMapper;
 import model.Currency;
 
@@ -19,28 +20,25 @@ public class CurrencyRepository {
         this.currencyMapper = currencyMapper;
     }
 
-    public List<Currency> findAll() throws SQLException {
+    public List<Currency> findAll() {
         List<Currency> currencies = new ArrayList<>();
         String sql = "SELECT * FROM CurrencyExchanger.Currencies";
 
         try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             Statement stmt = conn.createStatement()) {
 
+            ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                Currency c = new Currency();
-                c.setId(rs.getLong("id"));
-                c.setCode(rs.getString("code"));
-                c.setFullName(rs.getString("fullName"));
-                c.setSign(rs.getString("sign"));
-                currencies.add(c);
+                Currency currency = createCurrency(rs);
+                currencies.add(currency);
             }
+        }catch(SQLException e){
+            throw new DatabaseException("Ошибка запроса к базе данных", e);
         }
         return currencies;
     }
 
-    public Currency save(CurrencyRequest currencyDto) {
-        Currency currency = currencyMapper.toEntity(currencyDto);
+    public Currency save(Currency currency) {
         String sql = "INSERT INTO CurrencyExchanger.Currencies (code, fullName, sign) VALUES (?, ?, ?)";
 
         try (Connection conn = dataSource.getConnection();
@@ -55,33 +53,42 @@ public class CurrencyRepository {
             if (generatedKeys.next()) {
                 currency.setId(generatedKeys.getLong(1));
             }
-
             return currency;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка сохранения валюты", e);
+            if(e.getSQLState() != null && e.getSQLState().equals("23505")){
+                throw new CurrencyAlreadyExistsException("Такая валюта уже существует", e);
+            }
+            else{
+                throw new DatabaseException("Ошибка запроса к базе данных", e);
+            }
         }
     }
 
     public Optional<Currency> findByCode(String code){
         String sql = "Select * FROM CurrencyExchanger.Currencies WHERE code=?";
-        try(Connection conn = dataSource.getConnection()){
+        try(Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)){
 
-            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, code);
             ResultSet rs = stmt.executeQuery();
             if(rs.next()){
-                Currency currency = new Currency();
-                currency.setId(rs.getLong("id"));
-                currency.setCode(rs.getString("code"));
-                currency.setFullName(rs.getString("fullName"));
-                currency.setSign(rs.getString("sign"));
+                Currency currency = createCurrency(rs);
                 return Optional.of(currency);
             }
             return Optional.empty();
 
         }catch(SQLException e){
-            throw new RuntimeException("Ошибка поиска валюты по коду: " + e.getMessage(), e);
+            throw new DatabaseException("Ошибка в бд поиска валюты по коду: " + e.getMessage(), e);
         }
+    }
+
+    private Currency createCurrency(ResultSet rs) throws SQLException{
+        Currency currency = new Currency();
+        currency.setId(rs.getLong("id"));
+        currency.setCode(rs.getString("code"));
+        currency.setFullName(rs.getString("fullName"));
+        currency.setSign(rs.getString("sign"));
+        return currency;
     }
 }

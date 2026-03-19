@@ -14,21 +14,21 @@ public class ExchangeRateService {
     }
 
     public ExchangeRate getExchangeRate(String baseCurrencyCode, String targetCurrencyCode){
-        Optional<ExchangeRate> exchangeRateOptAB = exchangeRateRepo.findByCoupleCodes(baseCurrencyCode, targetCurrencyCode);
+        Optional<ExchangeRate> exchangeRateOptAB = exchangeRateRepo.findByCodes(baseCurrencyCode, targetCurrencyCode);
         if(exchangeRateOptAB.isPresent()){
             return exchangeRateOptAB.get();
         }
 
-        Optional<ExchangeRate> exchangeRateOptBA = exchangeRateRepo.findByCoupleCodes(targetCurrencyCode, baseCurrencyCode);
+        Optional<ExchangeRate> exchangeRateOptBA = exchangeRateRepo.findByCodes(targetCurrencyCode, baseCurrencyCode);
         if(exchangeRateOptBA.isPresent()){
             var exchangeRate = exchangeRateOptBA.get();
             exchangeRate.setRate(BigDecimal.ONE.divide(exchangeRate.getRate(), 6, RoundingMode.HALF_UP));
             return exchangeRate;
         }
 
-        Optional<ExchangeRate> exchangeRateOptA = exchangeRateRepo.findByCoupleCodes("USD", baseCurrencyCode);
+        Optional<ExchangeRate> exchangeRateOptA = exchangeRateRepo.findByCodes("USD", baseCurrencyCode);
         if(exchangeRateOptA.isPresent()){
-            Optional<ExchangeRate> exchangeRateOptB = exchangeRateRepo.findByCoupleCodes("USD", targetCurrencyCode);
+            Optional<ExchangeRate> exchangeRateOptB = exchangeRateRepo.findByCodes("USD", targetCurrencyCode);
             if(exchangeRateOptB.isPresent()){
                 BigDecimal rate = exchangeRateOptB.get().getRate().divide(exchangeRateOptA.get().getRate(), 2, RoundingMode.HALF_UP);
                 ExchangeRate exchangeRate = new ExchangeRate();

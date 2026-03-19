@@ -1,6 +1,8 @@
 package repository;
 
 import dto.ExchangeRateRequest;
+import exception.DatabaseException;
+import exception.ExchangeRateAlreadyExistsException;
 import mapper.ExchangeRateMapper;
 import model.Currency;
 import model.ExchangeRate;
@@ -34,11 +36,8 @@ public class ExchangeRateRepository {
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setLong(1, exchangeRate.getBaseCurrency().getId());
-
             stmt.setLong(2, exchangeRate.getTargetCurrency().getId());
-
             stmt.setBigDecimal(3, exchangeRate.getRate());
-
             stmt.executeUpdate();
 
             ResultSet generatedKeys = stmt.getGeneratedKeys();
@@ -49,12 +48,15 @@ public class ExchangeRateRepository {
             return exchangeRate;
 
         } catch (SQLException e) {
-            throw new RuntimeException("Ошибка сохранения курса валют", e);
+            if(e.getSQLState() != null && e.getSQLState().equals("23505")){
+                throw new ExchangeRateAlreadyExistsException("Ошибка сохранения курса валют");
+            }
+            throw new DatabaseException("Ошибка сохранения курса валют", e);
         }
     }
 
-    public List<ExchangeRate> findAll() throws SQLException {
-        List<ExchangeRate> rates = new ArrayList<>();
+    public List<ExchangeRate> findAll() {
+        List<ExchangeRate> exchangeRates = new ArrayList<>();
         String sql = """
                 SELECT  
                 er.id as exchange_rate_id,
@@ -72,35 +74,20 @@ public class ExchangeRateRepository {
                 JOIN CurrencyExchanger.Currencies as tc ON tc.id=er.targetCurrencyId""";
 
         try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             Statement stmt = conn.createStatement()) {
 
+            ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                Currency baseCurrency = new Currency();
-                baseCurrency.setId(rs.getLong("base_id"));
-                baseCurrency.setCode(rs.getString("base_code"));
-                baseCurrency.setFullName(rs.getString("base_fullName"));
-                baseCurrency.setSign(rs.getString("base_sign"));
-
-                Currency targetCurrency = new Currency();
-                targetCurrency.setId(rs.getLong("target_id"));
-                targetCurrency.setCode(rs.getString("target_code"));
-                targetCurrency.setFullName(rs.getString("target_fullName"));
-                targetCurrency.setSign(rs.getString("target_sign"));
-
-                ExchangeRate rate = new ExchangeRate();
-                rate.setId(rs.getLong("exchange_rate_id"));
-                rate.setBaseCurrency(baseCurrency);
-                rate.setTargetCurrency(targetCurrency);
-                rate.setRate(rs.getBigDecimal("rate"));
-
-                rates.add(rate);
+                ExchangeRate exchangeRate = createExchangeRate(rs);
+                exchangeRates.add(exchangeRate);
             }
+        }catch(SQLException e){
+            throw new DatabaseException("Ошибка сервера", e);
         }
-        return rates;
+        return exchangeRates;
     }
 
-    public Optional<ExchangeRate> findByCoupleCodes(String baseCurrencyCode, String targetCurrencyCode){
+    public Optional<ExchangeRate> findByCodes(String baseCurrencyCode, String targetCurrencyCode){
         String sql = """ 
             SELECT
                 er.id as exchange_rate_id,
@@ -127,30 +114,13 @@ public class ExchangeRateRepository {
             ResultSet rs = stmt.executeQuery();
 
             if(rs.next()){
-                Currency baseCurrency = new Currency();
-                baseCurrency.setId(rs.getLong("base_id"));
-                baseCurrency.setCode(rs.getString("base_code"));
-                baseCurrency.setFullName(rs.getString("base_fullName"));
-                baseCurrency.setSign(rs.getString("base_sign"));
-
-                Currency targetCurrency = new Currency();
-                targetCurrency.setId(rs.getLong("target_id"));
-                targetCurrency.setCode(rs.getString("target_code"));
-                targetCurrency.setFullName(rs.getString("target_fullName"));
-                targetCurrency.setSign(rs.getString("target_sign"));
-
-                ExchangeRate exchangeRate = new ExchangeRate();
-                exchangeRate.setId(rs.getLong("exchange_rate_id"));
-                exchangeRate.setBaseCurrency(baseCurrency);
-                exchangeRate.setTargetCurrency(targetCurrency);
-                exchangeRate.setRate(rs.getBigDecimal("rate"));
-
+                ExchangeRate exchangeRate = createExchangeRate(rs);
                 return Optional.of(exchangeRate);
             }
             return Optional.empty();
 
         } catch (SQLException e){
-            throw new RuntimeException("Ошибка поиска пары кодов в обменнике: " + e.getMessage(), e);
+            throw new DatabaseException("Ошибка поиска пары кодов в обменнике: " + e.getMessage(), e);
         }
     }
 
@@ -162,8 +132,9 @@ public class ExchangeRateRepository {
               AND targetCurrencyId = (SELECT id FROM CurrencyExchanger.Currencies WHERE code = ?)
         """;
 
-        try(Connection conn = dataSource.getConnection()){
-            PreparedStatement stmt = conn.prepareStatement(sql);
+        try(Connection conn = dataSource.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)){
+
             stmt.setBigDecimal(1, rate);
             stmt.setString(2, baseCurrencyCode);
             stmt.setString(3, targetCurrencyCode);
@@ -173,11 +144,32 @@ public class ExchangeRateRepository {
                 throw new RuntimeException("В обменнике не было такой пары: "
                         + baseCurrencyCode + targetCurrencyCode);
             }
-            return findByCoupleCodes(baseCurrencyCode, targetCurrencyCode).get();
+            return findByCodes(baseCurrencyCode, targetCurrencyCode).get();
 
         }catch(SQLException e){
-            throw new RuntimeException("Ошибка изменения ставки(rate): " + e.getMessage(), e);
+            throw new DatabaseException("Ошибка изменения ставки(rate): " + e.getMessage(), e);
         }
+    }
 
+
+    public ExchangeRate createExchangeRate(ResultSet rs) throws SQLException{
+        Currency baseCurrency = new Currency();
+        baseCurrency.setId(rs.getLong("base_id"));
+        baseCurrency.setCode(rs.getString("base_code"));
+        baseCurrency.setFullName(rs.getString("base_fullName"));
+        baseCurrency.setSign(rs.getString("base_sign"));
+
+        Currency targetCurrency = new Currency();
+        targetCurrency.setId(rs.getLong("target_id"));
+        targetCurrency.setCode(rs.getString("target_code"));
+        targetCurrency.setFullName(rs.getString("target_fullName"));
+        targetCurrency.setSign(rs.getString("target_sign"));
+
+        ExchangeRate exchangeRate = new ExchangeRate();
+        exchangeRate.setId(rs.getLong("exchange_rate_id"));
+        exchangeRate.setBaseCurrency(baseCurrency);
+        exchangeRate.setTargetCurrency(targetCurrency);
+        exchangeRate.setRate(rs.getBigDecimal("rate"));
+        return exchangeRate;
     }
 }
