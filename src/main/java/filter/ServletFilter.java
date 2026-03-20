@@ -2,13 +2,9 @@ package filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.ErrorResponse;
-import exception.CurrencyAlreadyExistsException;
-import exception.CurrencyNotFoundException;
-import exception.DatabaseException;
-import exception.ResourceNotFoundException;
+import exception.*;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
@@ -20,25 +16,30 @@ public class ServletFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+            throws IOException {
 
         HttpServletResponse resp = (HttpServletResponse) response;
-        HttpServletRequest req = (HttpServletRequest) request;
         resp.setContentType("application/json;charset=UTF-8");
         try{
             chain.doFilter(request, response);
         }
-        catch(CurrencyAlreadyExistsException e){
-            sendError(resp, HttpServletResponse.SC_CONFLICT, e.getMessage());
+        catch(CurrencyAlreadyExistsException | ExchangeRateAlreadyExistsException e){
+            sendError(resp, HttpServletResponse.SC_CONFLICT, e.getMessage()); // 409
         }
-        catch (CurrencyNotFoundException | ResourceNotFoundException e){
+        catch (CurrencyNotFoundException
+               | ResourceNotFoundException
+               | ExchangeNotFoundException
+               | ExchangeRateNotFoundException e){  //404
             sendError(resp, HttpServletResponse.SC_NOT_FOUND, e.getMessage());
         }
         catch(DatabaseException e){
-            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage()); //500
+        }
+        catch (ValidationException e){
+            sendError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         }
         catch (Exception e){
-
+            sendError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 

@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Mapper(componentModel = "default")
+@Mapper(componentModel = "default", uses = CurrencyMapper.class)
 public interface ExchangeRateMapper {
     default ExchangeRate toEntity(ExchangeRateRequest request, Currency baseCurrency, Currency targetCurrency) {
         ExchangeRate exchangeRate = new ExchangeRate();

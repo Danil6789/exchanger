@@ -3,85 +3,64 @@ package servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.ExchangeRateRequest;
 import dto.ExchangeRateResponse;
+import exception.ValidationException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NoArgsConstructor;
-import mapper.ExchangeRateMapper;
-import model.ExchangeRate;
-import repository.CurrencyRepository;
-import repository.ExchangeRateRepository;
+import service.ExchangeRateService;
+import validator.ExchangeRateValidator;
+import validator.ValidationResult;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @NoArgsConstructor
 @WebServlet(urlPatterns = "/exchangeRates")
 public class ExchangeRatesServlet extends HttpServlet {
     private ObjectMapper objectMapper;
-    private ExchangeRateRepository exchangeRateRepo;
-    private CurrencyRepository currencyRepo;
-    private ExchangeRateMapper exchangeRateMapper;
-
+    private ExchangeRateService exchangeRateService;
+    private ExchangeRateValidator exchangeRateValidator;
     @Override
     public void init() {
         this.objectMapper = new ObjectMapper();
-        this.exchangeRateRepo = (ExchangeRateRepository) getServletContext()
-                .getAttribute("exchangeRateRepo");
-        this.currencyRepo = (CurrencyRepository) getServletContext()
-                .getAttribute("currencyRepo");
-        this.exchangeRateMapper = (ExchangeRateMapper) getServletContext().getAttribute("exchangeRateMapper");
+        this.exchangeRateService = (ExchangeRateService) getServletContext().getAttribute("exchangeRateService");
+        exchangeRateValidator = new ExchangeRateValidator();
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try{
-            List<ExchangeRateResponse> exchangeRateResponses = exchangeRateMapper.toDtoList(exchangeRateRepo.findAll());
-            objectMapper.writeValue(resp.getOutputStream(), exchangeRateResponses);
-        } catch (Exception e) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-
-            objectMapper.writeValue(resp.getOutputStream(), error);
-        }
+        List<ExchangeRateResponse> exchangeRateResponses = exchangeRateService.getAllExchangeRate();
+        resp.setStatus(200);
+        objectMapper.writeValue(resp.getOutputStream(), exchangeRateResponses);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String baseCurrencyCode = req.getParameter("baseCurrencyCode");
         String targetCurrencyCode = req.getParameter("targetCurrencyCode");
-        String rate = req.getParameter("rate");
+        String rateParam = req.getParameter("rate");
 
-        if(baseCurrencyCode == null
-                || targetCurrencyCode == null
-                || rate == null){
-            resp.setStatus(400);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Не все поля заполнены");
-            objectMapper.writeValue(resp.getOutputStream(), error);
-            return;
-        }
-        if (exchangeRateRepo
-                .findByCodes(baseCurrencyCode, targetCurrencyCode)
-                .isPresent()) {
-            resp.setStatus(409);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Такой обменный курс уже есть");
-            objectMapper.writeValue(resp.getOutputStream(), error);
-            return;
-        }
-        if(currencyRepo.findByCode(baseCurrencyCode).isPresent()
-                && currencyRepo.findByCode(targetCurrencyCode).isPresent()){
+        ValidationResult validation = exchangeRateValidator.validateCreateRequest(
+                baseCurrencyCode,
+                targetCurrencyCode,
+                rateParam
+        );
 
-            ExchangeRate saved = exchangeRateRepo.save(new ExchangeRateRequest(baseCurrencyCode, targetCurrencyCode, new BigDecimal(rate)));
-            resp.setStatus(201);
-            ExchangeRateResponse exchangeRateResponse = exchangeRateMapper.toDto(saved);
-            objectMapper.writeValue(resp.getOutputStream(), exchangeRateResponse);
+        if (!validation.isValid()) {
+            throw new ValidationException(validation.getFirstError());
         }
+
+        String baseCode = validation.getData("baseCurrencyCode");
+        String targetCode = validation.getData("targetCurrencyCode");
+        BigDecimal rate = validation.getData("rate");
+
+        ExchangeRateRequest request = new ExchangeRateRequest(baseCode, targetCode, rate);
+        ExchangeRateResponse response = exchangeRateService.addExchangeRate(request);
+
+        resp.setStatus(201);
+        objectMapper.writeValue(resp.getOutputStream(), response);
     }
 }

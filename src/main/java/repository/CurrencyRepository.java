@@ -3,6 +3,7 @@ package repository;
 import exception.CurrencyAlreadyExistsException;
 import exception.DatabaseException;
 import mapper.CurrencyMapper;
+import mapper.ResultSetMapper;
 import model.Currency;
 
 import javax.sql.DataSource;
@@ -13,11 +14,11 @@ import java.util.Optional;
 
 public class CurrencyRepository {
     private final DataSource dataSource;
-    private final CurrencyMapper currencyMapper;
+    private final ResultSetMapper resultSetMapper;
 
     public CurrencyRepository(DataSource dataSource, CurrencyMapper currencyMapper) {
         this.dataSource = dataSource;
-        this.currencyMapper = currencyMapper;
+        this.resultSetMapper = new ResultSetMapper();
     }
 
     public List<Currency> findAll() {
@@ -29,7 +30,7 @@ public class CurrencyRepository {
 
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                Currency currency = createCurrency(rs);
+                Currency currency = resultSetMapper.mapToCurrency(rs);
                 currencies.add(currency);
             }
         }catch(SQLException e){
@@ -73,7 +74,7 @@ public class CurrencyRepository {
             stmt.setString(1, code);
             ResultSet rs = stmt.executeQuery();
             if(rs.next()){
-                Currency currency = createCurrency(rs);
+                Currency currency = resultSetMapper.mapToCurrency(rs);
                 return Optional.of(currency);
             }
             return Optional.empty();
@@ -81,14 +82,5 @@ public class CurrencyRepository {
         }catch(SQLException e){
             throw new DatabaseException("Ошибка в бд поиска валюты по коду: " + e.getMessage(), e);
         }
-    }
-
-    private Currency createCurrency(ResultSet rs) throws SQLException{
-        Currency currency = new Currency();
-        currency.setId(rs.getLong("id"));
-        currency.setCode(rs.getString("code"));
-        currency.setFullName(rs.getString("fullName"));
-        currency.setSign(rs.getString("sign"));
-        return currency;
     }
 }

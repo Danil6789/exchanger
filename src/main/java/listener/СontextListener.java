@@ -12,6 +12,7 @@ import org.mapstruct.factory.Mappers;
 import repository.CurrencyRepository;
 import repository.ExchangeRateRepository;
 import service.CurrencyService;
+import service.ConvertService;
 import service.ExchangeRateService;
 
 import javax.sql.DataSource;
@@ -63,12 +64,13 @@ public class СontextListener implements ServletContextListener{
 
             CurrencyService currencyService = new CurrencyService(currencyRepo, currencyMapper);
             sce.getServletContext().setAttribute("currencyService", currencyService);
-            ExchangeRateService exchangeRateService = new ExchangeRateService(exchangeRateRepo);
-            sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
+            ConvertService convertService = new ConvertService(exchangeRateRepo);
+            sce.getServletContext().setAttribute("convertService", convertService);
 
             sce.getServletContext().setAttribute("currencyRepo", currencyRepo);
             sce.getServletContext().setAttribute("exchangeRateRepo", exchangeRateRepo);
-
+            ExchangeRateService exchangeRateService = new ExchangeRateService(exchangeRateMapper, exchangeRateRepo);
+            sce.getServletContext().setAttribute("exchangeRateService", exchangeRateService);
             System.out.println("9. Инициализация успешно завершена");
 
         }

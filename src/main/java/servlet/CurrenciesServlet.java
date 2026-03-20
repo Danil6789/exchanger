@@ -3,6 +3,7 @@ package servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.CurrencyRequest;
 import dto.CurrencyResponse;
+import exception.ValidationException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,11 +13,11 @@ import mapper.CurrencyMapper;
 import model.Currency;
 import repository.CurrencyRepository;
 import service.CurrencyService;
+import validator.CurrencyValidator;
+import validator.ValidationResult;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @NoArgsConstructor
 @WebServlet(urlPatterns = "/currencies")
@@ -25,6 +26,7 @@ public class CurrenciesServlet extends HttpServlet {
     private CurrencyRepository currencyRepo;
     private CurrencyMapper currencyMapper;
     private CurrencyService currencyService;
+    private CurrencyValidator currencyValidator;
 
     @Override
     public void init() {
@@ -32,7 +34,8 @@ public class CurrenciesServlet extends HttpServlet {
         currencyRepo = (CurrencyRepository) getServletContext()
                 .getAttribute("currencyRepo");
         currencyMapper = (CurrencyMapper) getServletContext().getAttribute("currencyMapper");
-        currencyService = (CurrencyService) getServletContext().getAttribute("currentService");
+        currencyService = (CurrencyService) getServletContext().getAttribute("currencyService");
+        currencyValidator = new CurrencyValidator();
     }
 
     @Override
@@ -48,15 +51,10 @@ public class CurrenciesServlet extends HttpServlet {
         String code = req.getParameter("code");
         String sign = req.getParameter("sign");
         CurrencyRequest currencyRequest = new CurrencyRequest(name, code, sign);
-        if (name == null || name.isEmpty() ||//TODO: Сделать валидацию классами
-                code == null || code.isEmpty() ||
-                sign == null || sign.isEmpty()) {
 
-            resp.setStatus(400);
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Не все поля заполнены");
-            objectMapper.writeValue(resp.getOutputStream(), error);
-            return;
+        ValidationResult validation = currencyValidator.validate(currencyRequest);
+        if(!validation.isValid()){
+            throw new ValidationException(validation.getFirstError());
         }
 
         CurrencyResponse currencyResponse = currencyService.addCurrency(currencyRequest);

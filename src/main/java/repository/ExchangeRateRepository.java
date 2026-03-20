@@ -4,6 +4,7 @@ import dto.ExchangeRateRequest;
 import exception.DatabaseException;
 import exception.ExchangeRateAlreadyExistsException;
 import mapper.ExchangeRateMapper;
+import mapper.ResultSetMapper;
 import model.Currency;
 import model.ExchangeRate;
 
@@ -18,10 +19,12 @@ public class ExchangeRateRepository {
     private final DataSource dataSource;
     private final ExchangeRateMapper exchangeRateMapper;
     private final CurrencyRepository currencyRepo;
+    private final ResultSetMapper resultSetMapper;
     public ExchangeRateRepository(DataSource dataSource, ExchangeRateMapper exchangeRateMapper, CurrencyRepository currencyRepo ) {
         this.dataSource = dataSource;
         this.exchangeRateMapper = exchangeRateMapper;
         this.currencyRepo = currencyRepo;
+        this.resultSetMapper = new ResultSetMapper();
     }
 
     public ExchangeRate save(ExchangeRateRequest exchangeRateDto) {
@@ -44,14 +47,16 @@ public class ExchangeRateRepository {
             if (generatedKeys.next()) {
                 exchangeRate.setId(generatedKeys.getLong(1));
             }
-
             return exchangeRate;
 
         } catch (SQLException e) {
             if(e.getSQLState() != null && e.getSQLState().equals("23505")){
-                throw new ExchangeRateAlreadyExistsException("Ошибка сохранения курса валют");
+                throw new ExchangeRateAlreadyExistsException("Такой курс валют уже есть");
             }
-            throw new DatabaseException("Ошибка сохранения курса валют", e);
+            else{
+                throw new DatabaseException("Ошибка сохранения курса валют", e);
+            }
+
         }
     }
 
@@ -78,7 +83,7 @@ public class ExchangeRateRepository {
 
             ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                ExchangeRate exchangeRate = createExchangeRate(rs);
+                ExchangeRate exchangeRate = resultSetMapper.mapToExchangeRate(rs);
                 exchangeRates.add(exchangeRate);
             }
         }catch(SQLException e){
@@ -114,7 +119,7 @@ public class ExchangeRateRepository {
             ResultSet rs = stmt.executeQuery();
 
             if(rs.next()){
-                ExchangeRate exchangeRate = createExchangeRate(rs);
+                ExchangeRate exchangeRate = resultSetMapper.mapToExchangeRate(rs);
                 return Optional.of(exchangeRate);
             }
             return Optional.empty();
@@ -149,27 +154,5 @@ public class ExchangeRateRepository {
         }catch(SQLException e){
             throw new DatabaseException("Ошибка изменения ставки(rate): " + e.getMessage(), e);
         }
-    }
-
-
-    public ExchangeRate createExchangeRate(ResultSet rs) throws SQLException{
-        Currency baseCurrency = new Currency();
-        baseCurrency.setId(rs.getLong("base_id"));
-        baseCurrency.setCode(rs.getString("base_code"));
-        baseCurrency.setFullName(rs.getString("base_fullName"));
-        baseCurrency.setSign(rs.getString("base_sign"));
-
-        Currency targetCurrency = new Currency();
-        targetCurrency.setId(rs.getLong("target_id"));
-        targetCurrency.setCode(rs.getString("target_code"));
-        targetCurrency.setFullName(rs.getString("target_fullName"));
-        targetCurrency.setSign(rs.getString("target_sign"));
-
-        ExchangeRate exchangeRate = new ExchangeRate();
-        exchangeRate.setId(rs.getLong("exchange_rate_id"));
-        exchangeRate.setBaseCurrency(baseCurrency);
-        exchangeRate.setTargetCurrency(targetCurrency);
-        exchangeRate.setRate(rs.getBigDecimal("rate"));
-        return exchangeRate;
     }
 }
