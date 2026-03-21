@@ -17,13 +17,11 @@ public class CurrencyService {
         return currencyRepo.findByCode(code)
                 .map(currencyMapper::toDto)
                 .orElseThrow(()-> new CurrencyNotFoundException("Такой валюты нет"));
-        //TODO: проверить возможно нужно эту в сервлет запихнуть и сервис тогде не нужен раз 1 строчка
     }
 
     public CurrencyResponse addCurrency(CurrencyRequest currencyRequest){
        Currency currency = currencyMapper.toEntity(currencyRequest);
         return currencyMapper.toDto(currencyRepo
                 .save(currency));
-        //TODO: проверить возможно нужно эту в сервлет запихнуть и сервис тогде не нужен раз 1 строчка
     }
 }

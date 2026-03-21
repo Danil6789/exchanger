@@ -35,6 +35,16 @@ public class ExchangeServlet extends HttpServlet{
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        System.out.println("=== EXCHANGE REQUEST DIAGNOSTICS ===");
+        System.out.println("from parameter: " + req.getParameter("from"));
+        System.out.println("to parameter: " + req.getParameter("to"));
+        System.out.println("amount parameter: " + req.getParameter("amount"));
+
+        // Все параметры
+        req.getParameterMap().forEach((key, values) -> {
+            System.out.println("  " + key + " = " + String.join(", ", values));
+        });
+        System.out.println("=== END DIAGNOSTICS ===");
         String baseCurrencyCode = req.getParameter("from");
         String targetCurrencyCode = req.getParameter("to");
         String amountParam = req.getParameter("amount");

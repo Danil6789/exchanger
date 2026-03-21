@@ -14,6 +14,7 @@ import validator.ValidationResult;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = "/exchangeRate/*")
 public class ExchangeRateServlet extends HttpServlet{
@@ -54,11 +55,11 @@ public class ExchangeRateServlet extends HttpServlet{
         if (!validation.isValid()) {
             throw new ValidationException(validation.getFirstError());
         }
+        String rate = getParameterFromBody(req, "rate");
 
         String baseCode = validation.getData("baseCode");
         String targetCode = validation.getData("targetCode");
 
-        String rate = req.getParameter("rate");
         ValidationResult rateValidation = exchangeRateValidator.validateRate(rate);
         if (!rateValidation.isValid()) {
             throw new ValidationException(rateValidation.getFirstError());
@@ -67,6 +68,21 @@ public class ExchangeRateServlet extends HttpServlet{
         ExchangeRateRequest request = new ExchangeRateRequest(baseCode, targetCode, new BigDecimal(rate));
         ExchangeRateResponse response = exchangeRateService.updateRate(request);
         objectMapper.writeValue(resp.getOutputStream(), response);
+    }
 
+    private String getParameterFromBody(HttpServletRequest req, String paramName) throws IOException {
+        String body = req.getReader().lines().collect(Collectors.joining("\n"));
+        if (body == null || body.isEmpty()) {
+            return null;
+        }
+
+        String[] params = body.split("&");
+        for (String param : params) {
+            String[] keyValue = param.split("=", 2);
+            if (keyValue.length == 2 && keyValue[0].equals(paramName)) {
+                return keyValue[1];
+            }
+        }
+        return null;
     }
 }

@@ -1,11 +1,8 @@
 package validator;
 
 import java.math.BigDecimal;
-import java.util.function.Consumer;
 
 public class ExchangeRateValidator {
-
-    // ==================== ПУБЛИЧНЫЕ МЕТОДЫ ====================
 
     public ValidationResult validateRate(String rate) {
         ValidationResult result = new ValidationResult();
@@ -60,14 +57,14 @@ public class ExchangeRateValidator {
     public ValidationResult validateExchangeRequest(String from, String to, String amount) {
         ValidationResult result = new ValidationResult();
 
-        validateCurrency(from, "from", result);
-        validateCurrency(to, "to", result);
+        validateCurrency(from, "baseCode", result);
+        validateCurrency(to, "targetCode", result);
         validateNumber(amount, "amount", "сумма", result);
 
         if (result.isValid()) {
             checkDifferentCurrencies(
-                    result.getData("from"),
-                    result.getData("to"),
+                    result.getData("baseCode"),
+                    result.getData("targetCode"),
                     result
             );
         }
@@ -75,7 +72,6 @@ public class ExchangeRateValidator {
         return result;
     }
 
-    // ==================== ПРИВАТНЫЕ МЕТОДЫ ====================
 
     private boolean isEmpty(String str) {
         return str == null || str.trim().isEmpty();
