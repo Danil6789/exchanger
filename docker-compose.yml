@@ -16,16 +16,21 @@ services:
     restart: unless-stopped
     networks:
       - exchanger-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 
   exchanger-api:
     image: tomcat:10.1-jdk21
     container_name: exchanger-api
-    ports:
-      - "8080:8080"
     volumes:
       - ./target/exchanger.war:/usr/local/tomcat/webapps/ROOT.war
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - exchanger-net
@@ -35,6 +40,20 @@ services:
       - DB_NAME=exchanger_db
       - DB_USER=postgres
       - DB_PASSWORD=admin
+
+  nginx:
+    image: nginx:alpine
+    container_name: exchanger-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - exchanger-api
+    restart: unless-stopped
+    networks:
+      - exchanger-net
 
 volumes:
   postgres_data:
