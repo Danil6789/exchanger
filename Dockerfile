@@ -1,9 +1,9 @@
-FROM tomcat:10.1-jdk21
+    FROM tomcat:10.1-jdk21
 
-RUN rm -rf /usr/local/tomcat/webapps/*
+    RUN rm -rf /usr/local/tomcat/webapps/*
 
-COPY target/exchanger.war /usr/local/tomcat/webapps/ROOT.war
+    COPY target/exchanger.war /usr/local/tomcat/webapps/ROOT.war
 
-EXPOSE 8080
+    EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
+    CMD ["catalina.sh", "run"]
