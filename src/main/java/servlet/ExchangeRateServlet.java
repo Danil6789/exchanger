@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.ExchangeRateRequest;
 import dto.ExchangeRateResponse;
 import exception.ValidationException;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,16 @@ public class ExchangeRateServlet extends HttpServlet{
     private ExchangeRateService exchangeRateService;
     private ExchangeRateValidator exchangeRateValidator;
 
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        String method = req.getMethod();
+
+        if (method.equals("PATCH")) {
+            doPatch(req, resp);
+        } else {
+            super.service(req, resp);
+        }
+    }
     @Override
     public void init() {
         this.objectMapper = new ObjectMapper();
