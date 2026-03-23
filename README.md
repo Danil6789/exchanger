@@ -4,12 +4,6 @@
 [![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
 [![Docker](https://img.shields.io/badge/Docker-✔-blue.svg)](https://www.docker.com/)
 
-# Currency Exchange API
-
-[![Java](https://img.shields.io/badge/Java-21-red.svg)](https://adoptium.net/)
-[![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
-[![Docker](https://img.shields.io/badge/Docker-✔-blue.svg)](https://www.docker.com/)
-
 ## Description
 
 Currency Exchange Project — REST API for managing currencies and exchange rates. Allows you to view and edit lists of currencies and exchange rates, and perform conversion of arbitrary amounts from one currency to another. A web interface is not required for the project.
