@@ -4,31 +4,32 @@
 [![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
 [![Docker](https://img.shields.io/badge/Docker-✔-blue.svg)](https://www.docker.com/)
 
-## Описание
+# Currency Exchange API
 
-Проект “Обмен валют” # REST API для описания валют и обменных курсов. Позволяет просматривать и редактировать списки валют и обменных курсов, и совершать расчёт конвертации произвольных сумм из одной валюты в другую.  Веб-интерфейс для проекта не подразумевается.
+[![Java](https://img.shields.io/badge/Java-21-red.svg)](https://adoptium.net/)
+[![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
+[![Docker](https://img.shields.io/badge/Docker-✔-blue.svg)](https://www.docker.com/)
 
-## Страница работы rest api с фронтендом
-![img_2.png](img_2.png)
-![img_3.png](img_3.png)
-![img_4.png](img_4.png)
+## Description
 
-## Технологии
+Currency Exchange Project — REST API for managing currencies and exchange rates. Allows you to view and edit lists of currencies and exchange rates, and perform conversion of arbitrary amounts from one currency to another. A web interface is not required for the project.
 
-| Компонент | Технология |
+## Frontend REST API Interface
+
+## Technologies
+
+| Component | Technology |
 |-----------|------------|
-| **Бэкенд** | Java 21, Jakarta Servlet 6.0, JDBC |
-| **База данных** | PostgreSQL 15 |
-| **Пул соединений** | HikariCP |
+| **Backend** | Java 21, Jakarta Servlet 6.0, JDBC |
+| **Database** | PostgreSQL 15 |
+| **Connection Pool** | HikariCP |
 | **JSON** | Jackson |
-| **Маппинг** | MapStruct |
-| **Контейнеризация** | Docker, Docker Compose |
-| **Веб-сервер** | Tomcat 10.1, Nginx |
+| **Mapping** | MapStruct |
+| **Containerization** | Docker, Docker Compose |
+| **Web Server** | Tomcat 10.1, Nginx |
 
 
-## 🚀 Запуск
-
-### Деплой
+## Deployment
 
 ```bash
 #for docker
@@ -44,28 +45,28 @@ cd exchanger
 mvn clean package
 docker compose up -d
 ```
-## 📋 API Эндпоинты
+## API Endpoints
 
-| Метод | URL | Описание |
+| Method | URL | Description |
 |-------|-----|----------|
-| `GET` | `/currencies` | Список всех валют |
-| `GET` | `/currency/USD` | Конкретная валюта |
-| `POST` | `/currencies` | Добавить валюту |
-| `GET` | `/exchangeRates` | Список всех курсов |
-| `GET` | `/exchangeRate/USDEUR` | Курс для пары |
-| `POST` | `/exchangeRates` | Добавить курс |
-| `PATCH` | `/exchangeRate/USDEUR` | Обновить курс |
-| `GET` | `/exchange?from=USD&to=EUR&amount=100` | Конвертация |
+| `GET` | `/currencies` | List all currencies |
+| `GET` | `/currency/USD` | Get a specific currency |
+| `POST` | `/currencies` | Add a new currency |
+| `GET` | `/exchangeRates` | List all exchange rates |
+| `GET` | `/exchangeRate/USDEUR` | Get rate for a specific pair |
+| `POST` | `/exchangeRates` | Add a new exchange rate |
+| `PATCH` | `/exchangeRate/USDEUR` | Update an existing exchange rate |
+| `GET` | `/exchange?from=USD&to=EUR&amount=100` | Convert currency |
 
 ---
 
-## 📥 Пример запроса и ответа
+##  Example Request & Response
 
-**Запрос:**
+**Request:**
 ```http
 GET /currencies
 ```
-ответ
+**Response:**
 ```json
 [
   {
@@ -82,15 +83,15 @@ GET /currencies
   }
 ]
 ```
-## 🔍 Алгоритм поиска курса
+## Exchange Rate Search Algorithm
 
-При конвертации из валюты **A** в валюту **B** курс ищется в 3 этапа:
+When converting from currency A to currency B, the exchange rate is determined in 3 steps:
 
-| Этап | Условие | Формула | Пример (USD → EUR) |
-|------|---------|---------|-------------------|
-| **1. Прямая пара** | Есть курс A→B | `rate = AB` | USD→EUR = 0.92 |
-| **2. Обратная пара** | Есть курс B→A | `rate = 1 / BA` | EUR→USD = 1.09 → USD→EUR = 1 / 1.09 = 0.917 |
-| **3. Кросс-курс через USD** | Есть USD→A и USD→B | `rate = USD→B / USD→A` | USD→EUR = 0.92, USD→RUB = 100 → RUB→EUR = 0.92 / 100 = 0.0092 |
+| Step | Condition                   | Formula | Example  (USD → EUR) |
+|------|-----------------------------|---------|-------------------|
+| **1. Direct pair** | Rate A→B exists             | `rate = AB` | USD→EUR = 0.92 |
+| **2. Inverse pair** | Rate B→A exists             | `rate = 1 / BA` | EUR→USD = 1.09 → USD→EUR = 1 / 1.09 = 0.917 |
+| **3. Cross rate via USD** | Rates USD→A and USD→B exist | `rate = USD→B / USD→A` | USD→EUR = 0.92, USD→RUB = 100 → RUB→EUR = 0.92 / 100 = 0.0092 |
 
-Если ни один из сценариев не сработал — возвращается ошибка `404 Not Found`.
+If none of the scenarios match `404 Not Found` error is returned..
 
