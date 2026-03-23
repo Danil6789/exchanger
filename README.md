@@ -1,12 +1,16 @@
 # Currency Exchange API
 
 [![Java](https://img.shields.io/badge/Java-21-red.svg)](https://adoptium.net/)
+[![Maven](https://img.shields.io/badge/Maven-3.9-blue.svg)](https://maven.apache.org/)
 [![Docker](https://img.shields.io/badge/Docker-✔-blue.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## Описание
 
 Проект “Обмен валют” # REST API для описания валют и обменных курсов. Позволяет просматривать и редактировать списки валют и обменных курсов, и совершать расчёт конвертации произвольных сумм из одной валюты в другую.  Веб-интерфейс для проекта не подразумевается.
+
+## Страница работы rest api с фронтендом
+![img.png](img.png)
+![img_1.png](img_1.png)
 
 ## Технологии
 
@@ -61,11 +65,22 @@ docker compose up -d
 GET /currencies
 ```
 ответ
+```json
 [
-    {"id": 1, "code": "USD", "name": "US Dollar", "sign": "$"},
-    {"id": 2, "code": "EUR", "name": "Euro", "sign": "€"}
+  {
+    "id": 1,
+    "code": "USD",
+    "name": "US Dollar",
+    "sign": "$"
+  },
+  {
+    "id": 2,
+    "code": "EUR",
+    "name": "Euro",
+    "sign": "€"
+  }
 ]
-
+```
 ## 🔍 Алгоритм поиска курса
 
 При конвертации из валюты **A** в валюту **B** курс ищется в 3 этапа:
