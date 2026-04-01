@@ -9,6 +9,7 @@
 Currency Exchange Project - REST API for managing currencies and exchange rates. Allows you to view and edit lists of currencies and exchange rates, and perform conversion of arbitrary amounts from one currency to another. A web interface is not required for the project.
 
 ## Frontend REST API Interface
+Frontend - https://github.com/zhukovsd/currency-exchange-frontend 
 
 ## Technologies
 
